@@ -28,13 +28,20 @@ tokens :-
 <0> @identifier { nameCaptureToken Identifier }
 <0> @number     { numberToken }
 <0> \n [\ ]*    { indentToken }
-<0> [\ \t] ;
+<0> [=]         { aToken TAssign }
+<0> [\ \t] ; 
 <0>      \"             { begin string }
 <string> [^\"]*         { stringLitToken }
 <string> \"             { begin 0 }
 
 {
-data Token = Identifier Text | TIndent Int | TStringLit Text | TNumber Double | EOF
+data Token 
+  = Identifier Text 
+  | TIndent Int 
+  | TAssign
+  | TStringLit Text 
+  | TNumber Double 
+  | EOF
   deriving (Eq, Show)
 
 data AlexUserState = AlexUserState
@@ -63,6 +70,9 @@ data RangedToken = RangedToken
   { rtToken :: Token
   , rtRange :: Range
   } deriving (Eq, Show)
+
+aToken :: Token -> AlexAction RangedToken
+aToken = nameCaptureToken . const
 
 nameCaptureToken :: (Text -> Token) -> AlexAction RangedToken
 nameCaptureToken buildToken inp@(_, _, _, str) len =
