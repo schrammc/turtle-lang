@@ -26,12 +26,15 @@ $dot = \.
 tokens :-
 
 <0> @identifier { nameCaptureToken Identifier }
-<0> @number { numberToken }
-<0> \n [\ ]* {indentToken }
+<0> @number     { numberToken }
+<0> \n [\ ]*    { indentToken }
 <0> [\ \t] ;
+<0>      \"             { begin string }
+<string> [^\"]*         { stringLitToken }
+<string> \"             { begin 0 }
 
 {
-data Token = Identifier Text | TIndent Int | TNumber Double | EOF
+data Token = Identifier Text | TIndent Int | TStringLit Text | TNumber Double | EOF
   deriving (Eq, Show)
 
 data AlexUserState = AlexUserState
@@ -79,6 +82,13 @@ indentToken ::  AlexAction RangedToken
 indentToken  inp@(_, _, _, str) len =
   pure RangedToken
     { rtToken = TIndent (len - 1)
+    , rtRange = mkRange inp len
+    }
+
+stringLitToken ::  AlexAction RangedToken
+stringLitToken  inp@(_, _, _, str) len =
+  pure RangedToken
+    { rtToken = TStringLit $ T.take len str
     , rtRange = mkRange inp len
     }
 
