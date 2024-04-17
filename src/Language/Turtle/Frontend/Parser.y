@@ -5,7 +5,7 @@ import Language.Turtle.Frontend.Lexer (Token(..), RangedToken(..))
 import Language.Turtle.Frontend.ParsedAST 
 }
 
-%name program Statements
+%name program Program
 %tokentype { RangedToken }
 %error { parseError }
 
@@ -13,8 +13,10 @@ import Language.Turtle.Frontend.ParsedAST
     id  { RangedToken { rtToken = Identifier $$ } }
     num { RangedToken { rtToken = TNumber $$ } }
     '=' { RangedToken { rtToken = TAssign } }
+    eof { RangedToken { rtToken = EOF } }
 
 %%
+Program       : Statements eof { $1 }
 Statements    : Statement { [ $1 ] }
               | Statements Statement { $2 : $1 }
 Statement     : Identifier '=' Expression { AStatement (Assignment $1 $3) }
