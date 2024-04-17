@@ -89,7 +89,7 @@ numberToken  inp@(_, _, _, str) len =
     }
 
 indentToken ::  AlexAction RangedToken
-indentToken  inp@(_, _, _, str) len =
+indentToken  inp len =
   pure RangedToken
     { rtToken = TIndent (len - 1)
     , rtRange = mkRange inp len
