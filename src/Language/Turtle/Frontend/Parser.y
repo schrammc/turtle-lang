@@ -1,13 +1,14 @@
 {
 module Language.Turtle.Frontend.Parser where
 
-import Language.Turtle.Frontend.Lexer (Token(..), RangedToken(..))
+import Language.Turtle.Frontend.Lexer (Alex, Token(..), RangedToken(..), alexGetUserState, runAlex, lexwrap)
 import Language.Turtle.Frontend.ParsedAST 
 }
 
 %name program Program
 %tokentype { RangedToken }
-%error { parseError }
+%monad { Alex }
+%lexer { lexwrap } {RangedToken { rtToken = EOF }}
 
 %token
     id  { RangedToken { rtToken = Identifier $$ } }
@@ -16,7 +17,7 @@ import Language.Turtle.Frontend.ParsedAST
     eof { RangedToken { rtToken = EOF } }
 
 %%
-Program       : Statements eof { $1 }
+Program       : Statements { $1 }
 Statements    : Statement { [ $1 ] }
               | Statements Statement { $2 : $1 }
 Statement     : Identifier '=' Expression { AStatement (Assignment $1 $3) }
@@ -28,7 +29,9 @@ Identifier    : id { Ident $1 }
 
 {
 
-parseError :: [RangedToken] -> a
-parseError _ = error "Parse error"
+happyError :: Alex a
+happyError = do 
+  st <- alexGetUserState
+  error $ "Unspecified parser error: " ++ show st
 
 }

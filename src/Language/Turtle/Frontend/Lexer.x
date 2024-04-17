@@ -2,6 +2,10 @@
 module Language.Turtle.Frontend.Lexer 
   ( Token(..)
   , RangedToken(..)
+  , Alex
+  , alexGetUserState
+  , runAlex
+  , lexwrap
   , tokenize 
   ) where
 
@@ -47,6 +51,7 @@ data Token
 data AlexUserState = AlexUserState
   {
   }
+  deriving (Eq, Show)
 
 alexInitUserState :: AlexUserState
 alexInitUserState = AlexUserState
@@ -110,4 +115,9 @@ tokenize input = runAlex input go
       if rtToken output == EOF
         then pure [output]
         else (output :) <$> go
+
+lexwrap :: (RangedToken -> Alex a) -> Alex a
+lexwrap cont = do
+    token <- alexMonadScan
+    cont token
 }
