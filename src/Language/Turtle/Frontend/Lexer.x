@@ -99,13 +99,27 @@ indentToken  inp len = do
   let indentLevel = len - 1
   case (indentLevel, st.indentLevels) of
     (0, []) -> pure Nothing
+    (x, []) -> indentTo st x
     (x, (y:ys)) | x == y -> pure Nothing
-                | x > y -> do
-                   alexSetUserState st { indentLevels = (x:st.indentLevels)}
-                   pure $ Just $ Ranged
-                          { value = TIndent (len - 1)
-                          , range = mkRange inp len
-                          }
+                | x > y -> indentTo st x
+                | otherwise -> do
+                  st <- alexGetUserState
+                  let restLevels = dropWhile (/= x) ys
+                  case restLevels of 
+                      [] | x == 0 -> pure Nothing -- unindent token
+                         | otherwise -> Alex $ const $ Left "Bad unindent"
+                      _ -> do
+                        alexSetUserState st { indentLevels = restLevels }
+                        pure Nothing -- unindentToken
+  where
+    indentTo st x = do      
+      alexSetUserState st { indentLevels = (x:st.indentLevels)}
+      pure $ Just $ Ranged
+            { value = TIndent (len - 1)
+            , range = mkRange inp len
+            }
+
+                  
 
 stringLitToken ::  AlexAction (Maybe (Ranged Token))
 stringLitToken  inp@(_, _, _, str) len =
