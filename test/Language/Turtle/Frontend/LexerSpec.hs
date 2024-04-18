@@ -1,12 +1,12 @@
 module Language.Turtle.Frontend.LexerSpec where
 
 import Data.Text (Text)
-import Language.Turtle.Frontend.Lexer (Token (..), rtToken, tokenize)
+import Language.Turtle.Frontend.Lexer (Token (..), tokenize, value)
 import Test.Hspec
 
 shouldTokenizeAs :: Text -> [Token] -> Expectation
 shouldTokenizeAs input expected = do
-  fmap rtToken <$> tokenize input `shouldBe` Right expected
+  fmap value <$> tokenize input `shouldBe` Right expected
 
 spec :: Spec
 spec = do

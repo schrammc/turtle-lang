@@ -1,7 +1,7 @@
 {
 module Language.Turtle.Frontend.Lexer 
   ( Token(..)
-  , RangedToken(..)
+  , Ranged(..)
   , Alex
   , alexGetUserState
   , runAlex
@@ -56,14 +56,19 @@ data AlexUserState = AlexUserState
 alexInitUserState :: AlexUserState
 alexInitUserState = AlexUserState
 
-alexEOF :: Alex RangedToken
+alexEOF :: Alex (Ranged Token)
 alexEOF = do
   (pos, _, _, _) <- alexGetInput
-  pure $ RangedToken EOF (Range pos pos)
+  pure $ Ranged EOF (Range pos pos)
 
 data Range = Range
   { start :: AlexPosn
   , stop :: AlexPosn
+  } deriving (Eq, Show)
+
+data Ranged a = Ranged
+  { value :: a
+  , range :: Range
   } deriving (Eq, Show)
 
 mkRange :: AlexInput -> Int -> Range
@@ -71,53 +76,46 @@ mkRange (start_, _, _, str) len = Range{start = start_, stop = stop_}
   where
     stop_ = T.foldl' alexMove start_ $ T.take len str
 
-data RangedToken = RangedToken
-  { rtToken :: Token
-  , rtRange :: Range
-  } deriving (Eq, Show)
-
-aToken :: Token -> AlexAction RangedToken
+aToken :: Token -> AlexAction (Ranged Token)
 aToken = nameCaptureToken . const
 
-nameCaptureToken :: (Text -> Token) -> AlexAction RangedToken
+nameCaptureToken :: (Text -> Token) -> AlexAction (Ranged Token)
 nameCaptureToken buildToken inp@(_, _, _, str) len =
-  pure RangedToken
-    { rtToken = buildToken $ T.take len str
-    , rtRange = mkRange inp len
+  pure Ranged
+    { value = buildToken $ T.take len str
+    , range = mkRange inp len
     }
 
-numberToken ::  AlexAction RangedToken
+numberToken ::  AlexAction (Ranged Token)
 numberToken  inp@(_, _, _, str) len =
-  pure RangedToken
-    { rtToken = TNumber $ read $ T.unpack $ T.take len str
-    , rtRange = mkRange inp len
+  pure Ranged
+    { value = TNumber $ read $ T.unpack $ T.take len str
+    , range = mkRange inp len
     }
 
-indentToken ::  AlexAction RangedToken
+indentToken ::  AlexAction(Ranged Token)
 indentToken  inp len =
-  pure RangedToken
-    { rtToken = TIndent (len - 1)
-    , rtRange = mkRange inp len
+  pure Ranged
+    { value = TIndent (len - 1)
+    , range = mkRange inp len
     }
 
-stringLitToken ::  AlexAction RangedToken
+stringLitToken ::  AlexAction (Ranged Token)
 stringLitToken  inp@(_, _, _, str) len =
-  pure RangedToken
-    { rtToken = TStringLit $ T.take len str
-    , rtRange = mkRange inp len
+  pure Ranged
+    { value = TStringLit $ T.take len str
+    , range = mkRange inp len
     }
 
-tokenize :: Text -> Either String [RangedToken]
+tokenize :: Text -> Either String [Ranged Token]
 tokenize input = runAlex input go
   where
     go = do
       output <- alexMonadScan
-      if rtToken output == EOF
+      if value output == EOF
         then pure [output]
         else (output :) <$> go
 
-lexwrap :: (RangedToken -> Alex a) -> Alex a
-lexwrap cont = do
-    token <- alexMonadScan
-    cont token
+lexwrap :: (Ranged Token -> Alex a) -> Alex a
+lexwrap cont = alexMonadScan >>= cont
 }

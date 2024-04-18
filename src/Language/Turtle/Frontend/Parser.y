@@ -1,20 +1,20 @@
 {
 module Language.Turtle.Frontend.Parser where
 
-import Language.Turtle.Frontend.Lexer (Alex, Token(..), RangedToken(..), alexGetUserState, runAlex, lexwrap)
+import Language.Turtle.Frontend.Lexer (Alex, Token(..), Ranged(..), alexGetUserState, runAlex, lexwrap)
 import Language.Turtle.Frontend.ParsedAST 
 }
 
 %name program Program
-%tokentype { RangedToken }
+%tokentype { Ranged Token }
 %monad { Alex }
-%lexer { lexwrap } {RangedToken { rtToken = EOF }}
+%lexer { lexwrap } {Ranged { value = EOF }}
 
 %token
-    id  { RangedToken { rtToken = Identifier $$ } }
-    num { RangedToken { rtToken = TNumber $$ } }
-    '=' { RangedToken { rtToken = TAssign } }
-    eof { RangedToken { rtToken = EOF } }
+    id  { Ranged { value = Identifier $$ } }
+    num { Ranged { value = TNumber $$ } }
+    '=' { Ranged { value = TAssign } }
+    eof { Ranged { value = EOF } }
 
 %%
 Program       : Statements { $1 }
