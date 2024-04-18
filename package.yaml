@@ -40,12 +40,14 @@ ghc-options:
 
 default-extensions:
   - OverloadedStrings
+  - OverloadedRecordDot
+  - LambdaCase
 
 library:
   source-dirs: src
 
 executables:
-  turtle-lang-exe:
+  turtle:
     main: Main.hs
     source-dirs: app
     ghc-options:
@@ -54,6 +56,7 @@ executables:
       - -with-rtsopts=-N
     dependencies:
       - turtle-lang
+      - optparse-applicative
 
 tests:
   turtle-lang-test:
