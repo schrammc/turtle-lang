@@ -1,4 +1,4 @@
-module Language.Turtle.Frontend.LexerSpec where
+module Language.Turtle.Frontend.LexerSpec (spec) where
 
 import Data.Text (Text)
 import Language.Turtle.Frontend.Lexer (Token (..), tokenize, value)
@@ -15,6 +15,17 @@ spec = do
       it "a" $ shouldTokenizeAs "a" [Identifier "a", EOF]
       it "a_" $ shouldTokenizeAs "a_" [Identifier "a_", EOF]
       it "_a" $ shouldTokenizeAs "_a" [Identifier "_a", EOF]
+
+    describe "linebreaks / empty lines" $ do
+      it "a\\nb" $ shouldTokenizeAs "a\nb" [Identifier "a", Identifier "b", EOF]
+      it "a\\n\\nb" $ shouldTokenizeAs "a\n\nb" [Identifier "a", Identifier "b", EOF]
+      it "a\\n  \t\\nb" $ shouldTokenizeAs "a\n\nb" [Identifier "a", Identifier "b", EOF]
+
+    describe "indent" $ do
+      it "a\\n  b" $ shouldTokenizeAs "a\n  b" [Identifier "a", TIndent 2, Identifier "b", EOF]
+      it "a\\n \\n  b" $ shouldTokenizeAs "a\n \n  b" [Identifier "a", TIndent 2, Identifier "b", EOF]
+      it "a\\n  b\\n    c" $ shouldTokenizeAs "a\n  b\n    c" [Identifier "a", TIndent 2, Identifier "b", TIndent 4, Identifier "c", EOF]
+
     describe "String Literal" $ do
       xit "\"\"" $ shouldTokenizeAs "\"\"" [TStringLit "", EOF]
       it "\"abc\"" $ shouldTokenizeAs "\"abc\"" [TStringLit "abc", EOF]

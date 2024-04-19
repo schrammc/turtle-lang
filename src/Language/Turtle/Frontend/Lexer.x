@@ -1,8 +1,10 @@
 {
+{-# LANGUAGE MultiWayIf #-}
 module Language.Turtle.Frontend.Lexer 
   ( Token(..)
   , Ranged(..)
-  , Alex
+  , Alex(..)
+  , AlexState(..)
   , alexGetUserState
   , runAlex
   , lexwrap
@@ -33,10 +35,10 @@ tokens :-
 <0> @number     { numberToken }
 <0> \n [\ ]*    { indentToken }
 <0> [=]         { aToken TAssign }
-<0> [\ \t] ; 
-<0>      \"             { begin string }
-<string> [^\"]*         { stringLitToken }
-<string> \"             { begin 0 }
+<0> [\ \t]      ;
+<0> \"          { begin string }
+<string> [^\"]* { stringLitToken }
+<string> \"     { begin 0 }
 
 {
 data Token 
@@ -94,24 +96,27 @@ numberToken  inp@(_, _, _, str) len =
     }
 
 indentToken ::  AlexAction (Maybe (Ranged Token))
-indentToken  inp len = do 
-  st <- alexGetUserState
-  let indentLevel = len - 1
-  case (indentLevel, st.indentLevels) of
-    (0, []) -> pure Nothing
-    (x, []) -> indentTo st x
-    (x, (y:ys)) | x == y -> pure Nothing
-                | x > y -> indentTo st x
-                | otherwise -> do
-                  st <- alexGetUserState
-                  let restLevels = dropWhile (/= x) ys
-                  case restLevels of 
-                      [] | x == 0 -> pure Nothing -- unindent token
-                         | otherwise -> Alex $ const $ Left "Bad unindent"
-                      _ -> do
-                        alexSetUserState st { indentLevels = restLevels }
-                        pure Nothing -- unindentToken
+indentToken inp@(_, _, _, str) len =  
+  if | T.null rest -> pure Nothing 
+     | T.head rest == '\n' -> pure Nothing 
+     | otherwise -> do
+         st <- alexGetUserState
+         let indentLevel = len - 1
+         case (indentLevel, st.indentLevels) of
+           (0, []) -> pure Nothing
+           (x, []) -> indentTo st x
+           (x, (y:ys)) | x == y -> pure Nothing
+                       | x > y -> indentTo st x
+                       | otherwise -> do
+                         let restLevels = dropWhile (/= x) ys
+                         case restLevels of 
+                             [] | x == 0 -> pure Nothing -- unindent token
+                                | otherwise -> Alex $ const $ Left "Bad unindent"
+                             _ -> do
+                               alexSetUserState st { indentLevels = restLevels }
+                               pure Nothing -- unindentToken
   where
+    (_, rest) = T.splitAt len str
     indentTo st x = do      
       alexSetUserState st { indentLevels = (x:st.indentLevels)}
       pure $ Just $ Ranged

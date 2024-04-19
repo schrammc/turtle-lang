@@ -1,7 +1,7 @@
 {
 module Language.Turtle.Frontend.Parser where
 
-import Language.Turtle.Frontend.Lexer (Alex, Token(..), Ranged(..), alexGetUserState, runAlex, lexwrap)
+import Language.Turtle.Frontend.Lexer (Alex(..), AlexState(..), Token(..), Ranged(..), alexGetUserState, runAlex, lexwrap)
 import Language.Turtle.Frontend.ParsedAST 
 }
 
@@ -30,8 +30,7 @@ Identifier    : id { Ident $1 }
 {
 
 happyError :: Alex a
-happyError = do 
-  st <- alexGetUserState
-  error $ "Unspecified parser error: " ++ show st
+happyError = Alex $ \alexState -> do 
+  Left $ "Unspecified parser error at (char, line, col)"  ++ show alexState.alex_pos
 
 }
