@@ -44,6 +44,7 @@ tokens :-
 data Token 
   = Identifier Text 
   | TIndent Int 
+  | TUnindent
   | TAssign
   | TStringLit Text 
   | TNumber Double 
@@ -109,12 +110,13 @@ indentToken inp@(_, _, _, str) len =
                        | x > y -> indentTo st x
                        | otherwise -> do
                          let restLevels = dropWhile (/= x) ys
+                         let unindentToken = Just $ Ranged { value = TUnindent, range = mkRange inp len}
                          case restLevels of 
-                             [] | x == 0 -> pure Nothing -- unindent token
+                             [] | x == 0 -> pure unindentToken
                                 | otherwise -> Alex $ const $ Left "Bad unindent"
                              _ -> do
                                alexSetUserState st { indentLevels = restLevels }
-                               pure Nothing -- unindentToken
+                               pure unindentToken
   where
     (_, rest) = T.splitAt len str
     indentTo st x = do      

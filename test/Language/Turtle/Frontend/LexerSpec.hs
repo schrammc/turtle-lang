@@ -25,6 +25,7 @@ spec = do
       it "a\\n  b" $ shouldTokenizeAs "a\n  b" [Identifier "a", TIndent 2, Identifier "b", EOF]
       it "a\\n \\n  b" $ shouldTokenizeAs "a\n \n  b" [Identifier "a", TIndent 2, Identifier "b", EOF]
       it "a\\n  b\\n    c" $ shouldTokenizeAs "a\n  b\n    c" [Identifier "a", TIndent 2, Identifier "b", TIndent 4, Identifier "c", EOF]
+      it "a\\n  b\\nc" $ shouldTokenizeAs "a\n  b\nc" [Identifier "a", TIndent 2, Identifier "b", TUnindent, Identifier "c", EOF]
 
     describe "String Literal" $ do
       xit "\"\"" $ shouldTokenizeAs "\"\"" [TStringLit "", EOF]
