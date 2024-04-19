@@ -1,5 +1,5 @@
 module Language.Turtle.Frontend.ParsedAST (
-    ParsedAST (..),
+    ParsedAST,
     Literal (..),
     Statement (..),
     Ident (..),
@@ -11,9 +11,7 @@ import Data.Text (Text)
 newtype Ident = Ident Text
     deriving (Show, Eq)
 
-newtype ParsedAST
-    = AStatement Statement
-    deriving (Show, Eq)
+type ParsedAST = [Statement]
 
 data Expression
     = ELiteral Literal
@@ -26,4 +24,5 @@ newtype Literal = NumLit Double
 data Statement
     = Assignment Ident Expression
     | StatementExpression Expression
+    | If Expression [Statement]
     deriving (Show, Eq)

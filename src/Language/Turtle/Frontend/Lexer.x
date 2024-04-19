@@ -36,7 +36,11 @@ tokens :-
 <0> \n [\ ]*    { indentToken }
 <0> [=]         { aToken TAssign }
 <0> [\ \t]      ;
+<0> :           { aToken TColon }
+<0> \,          { aToken TComma }
 <0> \"          { begin string }
+<0> if          { aToken TIf}
+<0> else        { aToken TElse}
 <string> [^\"]* { stringLitToken }
 <string> \"     { begin 0 }
 
@@ -48,6 +52,10 @@ data Token
   | TAssign
   | TStringLit Text 
   | TNumber Double 
+  | TColon
+  | TComma
+  | TIf
+  | TElse
   | EOF
   deriving (Eq, Show)
 

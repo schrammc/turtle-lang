@@ -11,26 +11,32 @@ import Language.Turtle.Frontend.ParsedAST
 %lexer { lexwrap } {Ranged { value = EOF }}
 
 %token
-    id  { Ranged { value = Identifier $$ } }
-    num { Ranged { value = TNumber $$ } }
-    '=' { Ranged { value = TAssign } }
-    eof { Ranged { value = EOF } }
+    id       { Ranged { value = Identifier $$ } }
+    num      { Ranged { value = TNumber $$ } }
+    '='      { Ranged { value = TAssign } }
+    ':'      { Ranged { value = TColon } }
+    ','      { Ranged { value = TComma } }
+    if       { Ranged { value = TIf } }
+    else     { Ranged { value = TElse } }
+    eof      { Ranged { value = EOF } }
+    indent   { Ranged { value = TIndent _ } }
+    unindent { Ranged { value = TUnindent } }
 
 %%
 Program       : Statements { $1 }
+Block         : indent Statements unindent { $2 }
 Statements    : Statement { [ $1 ] }
               | Statements Statement { $2 : $1 }
-Statement     : Identifier '=' Expression { AStatement (Assignment $1 $3) }
+Statement     : Identifier '=' Expression { (Assignment $1 $3) }
+              | if Expression ':' Block { If $2 $4 }
 Expression    : num { ELiteral (NumLit $1) }
               | Identifier { EIdentifier $1 }
 Identifier    : id { Ident $1 }
-         
-    
 
 {
 
 happyError :: Alex a
 happyError = Alex $ \alexState -> do 
-  Left $ "Unspecified parser error at (char, line, col)"  ++ show alexState.alex_pos
+  Left $ "Unspecified parser error at (char, line, col) "  ++ show alexState.alex_pos
 
 }
