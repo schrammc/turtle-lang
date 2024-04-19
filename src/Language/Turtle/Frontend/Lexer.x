@@ -13,6 +13,7 @@ module Language.Turtle.Frontend.Lexer
 
 import qualified Data.Text as T
 import Data.Text (Text)
+import Control.Monad (when)
 
 }
 
@@ -61,11 +62,15 @@ data Token
 
 data AlexUserState = AlexUserState
   { indentLevels :: [Int]
+  , pendingTokens :: [Ranged Token]
   }
   deriving (Eq, Show)
 
 alexInitUserState :: AlexUserState
-alexInitUserState = AlexUserState []
+alexInitUserState = AlexUserState [] []
+
+alexModifyUserState :: (AlexUserState -> AlexUserState) -> Alex ()
+alexModifyUserState f = alexSetUserState . f =<< alexGetUserState
 
 alexEOF :: Alex (Maybe (Ranged Token))
 alexEOF = do
@@ -113,22 +118,27 @@ indentToken inp@(_, _, _, str) len =
          let indentLevel = len - 1
          case (indentLevel, st.indentLevels) of
            (0, []) -> pure Nothing
-           (x, []) -> indentTo st x
+           (x, []) -> indentTo x
            (x, (y:ys)) | x == y -> pure Nothing
-                       | x > y -> indentTo st x
+                       | x > y -> indentTo x
                        | otherwise -> do
-                         let restLevels = dropWhile (/= x) ys
-                         let unindentToken = Just $ Ranged { value = TUnindent, range = mkRange inp len}
+                         let (unindentedLevels, restLevels) = span (/= x) ys
+                             unindentToken = Ranged { value = TUnindent, range = mkRange inp len}
+                             pendingUnindents = replicate (length unindentedLevels) unindentToken
+                             emitTokens = do
+                               when (length unindentedLevels > 0) $ 
+                                 alexModifyUserState $ \s -> s { pendingTokens = s.pendingTokens ++ pendingUnindents}
+                               pure $ Just unindentToken
                          case restLevels of 
-                             [] | x == 0 -> pure unindentToken
+                             [] | x == 0 -> emitTokens
                                 | otherwise -> Alex $ const $ Left "Bad unindent"
                              _ -> do
-                               alexSetUserState st { indentLevels = restLevels }
-                               pure unindentToken
+                               alexModifyUserState $ \s -> s { indentLevels = restLevels }
+                               emitTokens
   where
     (_, rest) = T.splitAt len str
-    indentTo st x = do      
-      alexSetUserState st { indentLevels = (x:st.indentLevels)}
+    indentTo x = do      
+      alexModifyUserState $ \st -> st{ indentLevels = (x:st.indentLevels)}
       pure $ Just $ Ranged
             { value = TIndent (len - 1)
             , range = mkRange inp len
@@ -147,17 +157,28 @@ tokenize :: Text -> Either String [Ranged Token]
 tokenize input = runAlex input go
   where
     go = do
-      output <- alexMonadScan
-      case output of 
-        Nothing -> go
-        Just tok -> 
-          if value tok == EOF
-            then pure [tok]
-            else (tok :) <$> go
+      st <- alexGetUserState
+      case st.pendingTokens of 
+        [] -> do
+            output <- alexMonadScan
+            case output of 
+              Nothing -> go
+              Just tok -> 
+                if value tok == EOF
+                  then pure [tok]
+                  else (tok :) <$> go
+        (x:xs) -> do 
+          alexSetUserState st { pendingTokens = xs }
+          (x:) <$> go
 
 lexwrap :: (Ranged Token -> Alex a) -> Alex a
 lexwrap cont = do 
-  alexMonadScan >>= \case 
-    Nothing -> lexwrap cont
-    Just tok -> cont tok
+  st <- alexGetUserState
+  case st.pendingTokens of 
+    [] -> alexMonadScan >>= \case 
+            Nothing -> lexwrap cont
+            Just tok -> cont tok
+    (x:xs) -> do 
+      alexSetUserState st { pendingTokens = xs }
+      cont x
 }
