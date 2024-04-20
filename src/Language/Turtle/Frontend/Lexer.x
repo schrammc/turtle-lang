@@ -132,9 +132,10 @@ indentToken inp@(_, _, _, str) len =
                          case restLevels of 
                              [] | x == 0 -> emitTokens
                                 | otherwise -> Alex $ const $ Left "Bad unindent"
-                             _ -> do
-                               alexModifyUserState $ \s -> s { indentLevels = restLevels }
-                               emitTokens
+                             (a:_) | a /= x -> Alex $ const $ Left "Bad unindent"
+                                   | otherwise -> do 
+                                       alexModifyUserState $ \s -> s { indentLevels = restLevels }
+                                       emitTokens
   where
     (_, rest) = T.splitAt len str
     indentTo x = do      
@@ -171,6 +172,14 @@ tokenize input = runAlex input go
           alexSetUserState st { pendingTokens = xs }
           (x:) <$> go
 
+-- The idea here is that the whole setup is geared toward emitting one token at
+-- a time. Unfortunately when unindenting it can happen that we undindent out 
+-- of a number of blocks that we want to emit multiple unindent tokens in one
+-- go.
+--
+-- This is where the hack with pending tokens comes from, even though the
+-- mechanism as it's implemented here is more general and could be used for
+-- other things as well.
 lexwrap :: (Ranged Token -> Alex a) -> Alex a
 lexwrap cont = do 
   st <- alexGetUserState
