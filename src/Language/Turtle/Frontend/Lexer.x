@@ -40,8 +40,6 @@ tokens :-
 <0> :           { aToken TColon }
 <0> \,          { aToken TComma }
 <0> \"          { begin string }
-<0> if          { aToken TIf}
-<0> else        { aToken TElse}
 <string> [^\"]* { stringLitToken }
 <string> \"     { begin 0 }
 
@@ -98,9 +96,16 @@ aToken = nameCaptureToken . const
 nameCaptureToken :: (Text -> Token) -> AlexAction (Maybe (Ranged Token))
 nameCaptureToken buildToken inp@(_, _, _, str) len =
   pure $ Just $ Ranged
-    { value = buildToken $ T.take len str
+    { value = tok
     , range = mkRange inp len
     }
+  where
+    idStr = T.take len str
+    tok = 
+      case idStr of 
+        "if"  -> TIf
+        "else" -> TElse
+        _ -> buildToken idStr
 
 numberToken ::  AlexAction (Maybe (Ranged Token))
 numberToken  inp@(_, _, _, str) len =

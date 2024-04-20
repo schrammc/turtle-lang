@@ -26,7 +26,7 @@ import Language.Turtle.Frontend.ParsedAST
 Program       : Statements { $1 }
 Block         : indent Statements unindent { $2 }
 Statements    : Statement { [ $1 ] }
-              | Statements Statement { $2 : $1 }
+              | Statement Statements { $1 : $2 }
 Statement     : Identifier '=' Expression { (Assignment $1 $3) }
               | if Expression ':' Block { If $2 $4 }
 Expression    : num { ELiteral (NumLit $1) }
