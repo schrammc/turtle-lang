@@ -22,9 +22,9 @@ spec = do
       it "a\\n  \t\\nb" $ shouldTokenizeAs "a\n\nb" [Identifier "a", Identifier "b", EOF]
 
     describe "indent" $ do
-      it "a\\n  b" $ shouldTokenizeAs "a\n  b" [Identifier "a", TIndent 2, Identifier "b", EOF]
-      it "a\\n \\n  b" $ shouldTokenizeAs "a\n \n  b" [Identifier "a", TIndent 2, Identifier "b", EOF]
-      it "a\\n  b\\n    c" $ shouldTokenizeAs "a\n  b\n    c" [Identifier "a", TIndent 2, Identifier "b", TIndent 4, Identifier "c", EOF]
+      it "a\\n  b" $ shouldTokenizeAs "a\n  b" [Identifier "a", TIndent 2, Identifier "b", TUnindent, EOF]
+      it "a\\n \\n  b" $ shouldTokenizeAs "a\n \n  b" [Identifier "a", TIndent 2, Identifier "b", TUnindent, EOF]
+      it "a\\n  b\\n    c" $ shouldTokenizeAs "a\n  b\n    c" [Identifier "a", TIndent 2, Identifier "b", TIndent 4, Identifier "c", TUnindent, TUnindent, EOF]
       it "a\\n  b\\n    c\\nd" $
         shouldTokenizeAs
           "a\n  b\n    c\nd"
@@ -51,6 +51,7 @@ spec = do
           , TUnindent
           , TUnindent
           , Identifier "e"
+          , TUnindent
           , EOF
           ]
       it "a\\n  b\\nc" $ shouldTokenizeAs "a\n  b\nc" [Identifier "a", TIndent 2, Identifier "b", TUnindent, Identifier "c", EOF]

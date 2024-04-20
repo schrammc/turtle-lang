@@ -73,7 +73,13 @@ alexModifyUserState f = alexSetUserState . f =<< alexGetUserState
 alexEOF :: Alex (Maybe (Ranged Token))
 alexEOF = do
   (pos, _, _, _) <- alexGetInput
-  pure $ Just $ Ranged EOF (Range pos pos)
+  st <- alexGetUserState
+  let makeToken t = Ranged t (Range pos pos)
+      unindents = makeToken . const TUnindent <$> st.indentLevels 
+  alexSetUserState st { indentLevels = []
+                      , pendingTokens = st.pendingTokens ++ unindents ++ [makeToken EOF ]
+                      }
+  pure $ Nothing
 
 data Range = Range
   { start :: AlexPosn
@@ -134,8 +140,11 @@ indentToken inp@(_, _, _, str) len =
                                when (length unindentedLevels > 0) $ 
                                  alexModifyUserState $ \s -> s { pendingTokens = s.pendingTokens ++ pendingUnindents}
                                pure $ Just unindentToken
+                         
                          case restLevels of 
-                             [] | x == 0 -> emitTokens
+                             [] | x == 0 -> do
+                                  alexModifyUserState $ \s -> s { indentLevels = restLevels}
+                                  emitTokens
                                 | otherwise -> Alex $ const $ Left "Bad unindent"
                              (a:_) | a /= x -> Alex $ const $ Left "Bad unindent"
                                    | otherwise -> do 
@@ -173,9 +182,11 @@ tokenize input = runAlex input go
                 if value tok == EOF
                   then pure [tok]
                   else (tok :) <$> go
-        (x:xs) -> do 
+        (tok:xs) -> do 
           alexSetUserState st { pendingTokens = xs }
-          (x:) <$> go
+          if value tok == EOF
+            then pure [tok]
+            else (tok :) <$> go
 
 -- The idea here is that the whole setup is geared toward emitting one token at
 -- a time. Unfortunately when unindenting it can happen that we undindent out 
