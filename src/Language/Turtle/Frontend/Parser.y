@@ -31,7 +31,7 @@ BlockOrSingleStatement
 Statements    : Statement { [ $1 ] }
               | Statement Statements { $1 : $2 }
 Statement     : Identifier '=' Expression { (Assignment $1 $3) }
-              | if Expression ':' BlockOrSingleStatement { If $2 $4 }
+              | if Expression ':' BlockOrSingleStatement else ':' BlockOrSingleStatement { If $2 $4 $7 }
 Expression    : num { ELiteral (NumLit $1) }
               | Identifier { EIdentifier $1 }
 Identifier    : id { Ident $1 }

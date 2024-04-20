@@ -24,5 +24,5 @@ newtype Literal = NumLit Double
 data Statement
     = Assignment Ident Expression
     | StatementExpression Expression
-    | If Expression [Statement]
+    | If Expression [Statement] [Statement]
     deriving (Show, Eq)
