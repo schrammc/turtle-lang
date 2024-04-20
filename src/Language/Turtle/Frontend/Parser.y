@@ -25,10 +25,13 @@ import Language.Turtle.Frontend.ParsedAST
 %%
 Program       : Statements { $1 }
 Block         : indent Statements unindent { $2 }
+BlockOrSingleStatement 
+  : Block { $1 }
+  | Statement { [ $1] }
 Statements    : Statement { [ $1 ] }
               | Statement Statements { $1 : $2 }
 Statement     : Identifier '=' Expression { (Assignment $1 $3) }
-              | if Expression ':' Block { If $2 $4 }
+              | if Expression ':' BlockOrSingleStatement { If $2 $4 }
 Expression    : num { ELiteral (NumLit $1) }
               | Identifier { EIdentifier $1 }
 Identifier    : id { Ident $1 }
