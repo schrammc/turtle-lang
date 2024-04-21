@@ -16,6 +16,8 @@ import Language.Turtle.Frontend.ParsedAST
     '='      { Ranged { value = TAssign } }
     ':'      { Ranged { value = TColon } }
     ','      { Ranged { value = TComma } }
+    '('      { Ranged { value = TParenL } }
+    ')'      { Ranged { value = TParenR } }
     if       { Ranged { value = TIf } }
     else     { Ranged { value = TElse } }
     eof      { Ranged { value = EOF } }
@@ -33,8 +35,10 @@ Statements    : Statement { [ $1 ] }
               | Statement newline Statements { $1 : $3 }
 Statement     : Identifier '=' Expression { (Assignment $1 $3) }
               | if Expression ':' BlockOrSingleStatement else ':' BlockOrSingleStatement { If $2 $4 $7 }
+              | Expression { StatementExpression $1 }
 Expression    : num { ELiteral (NumLit $1) }
               | Identifier { EIdentifier $1 }
+              | '(' Expression ')' { $2 }
 Identifier    : id { Ident $1 }
 
 {

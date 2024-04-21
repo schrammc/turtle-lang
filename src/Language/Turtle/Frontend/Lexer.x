@@ -32,16 +32,18 @@ $dot = \.
 
 tokens :-
 
-<0> @identifier { nameCaptureToken Identifier }
-<0> @number     { numberToken }
-<0> \n [\ ]*    { indentToken }
-<0> [=]         { aToken TAssign }
-<0> [\ \t]      ;
-<0> :           { aToken TColon }
-<0> \,          { aToken TComma }
-<0> \"          { begin string }
-<string> [^\"]* { stringLitToken }
-<string> \"     { begin 0 }
+<0> @identifier           { nameCaptureToken Identifier }
+<0> @number               { numberToken }
+<0> \n [\ ]*              { indentToken }
+<0> [=]                   { aToken TAssign }
+<0> [\ \t]                ;
+<0> :                     { aToken TColon }
+<0> \,                    { aToken TComma }
+<0> \"                    { begin string }
+<0> [\(\[\[\)\]\}]        { paren}
+
+<string> [^\"]*           { stringLitToken }
+<string> \"               { begin 0 }
 
 {
 data Token 
@@ -54,6 +56,12 @@ data Token
   | TNumber Double 
   | TColon
   | TComma
+  | TParenL
+  | TParenR
+  | TBracketL
+  | TBracketR
+  | TBraceL
+  | TBraceR
   | TIf
   | TElse
   | EOF
@@ -62,11 +70,12 @@ data Token
 data AlexUserState = AlexUserState
   { indentLevels :: [Int]
   , pendingTokens :: [Ranged Token]
+  , parenStack :: [Char]
   }
   deriving (Eq, Show)
 
 alexInitUserState :: AlexUserState
-alexInitUserState = AlexUserState [] []
+alexInitUserState = AlexUserState [] [] []
 
 alexModifyUserState :: (AlexUserState -> AlexUserState) -> Alex ()
 alexModifyUserState f = alexSetUserState . f =<< alexGetUserState
@@ -121,6 +130,42 @@ numberToken  inp@(_, _, _, str) len =
     , range = mkRange inp len
     }
 
+paren :: AlexAction (Maybe (Ranged Token))
+paren inp@(_,_,_,str) len
+  | ch `elem` openParens = do 
+      alexModifyUserState (\s -> s { parenStack = ch:s.parenStack})
+      pure $ Just rangedT
+  | ch `elem` closeParens = do 
+      st <- alexGetUserState
+      case st.parenStack of 
+        (p:ps) | match p ch -> do 
+                  alexSetUserState st { parenStack = ps } 
+                  pure $ Just rangedT
+               | otherwise  -> fail $ "Lexer error: mismatched '" ++ [ch] ++ "'"
+        [] -> fail "Lexer error: internal error (paren, 1)"
+  | otherwise = fail $ "Lexer error: internal error (paren, unrecognized char) '" ++ ch:"'"
+  where
+    ch = T.head str
+    openParens = "([{" :: [Char]
+    closeParens = ")]}" :: [Char]
+    match '(' ')' = True
+    match '[' ']' = True
+    match '{' '}' = True 
+    match _   _   = False
+    rangedT = Ranged { value = token_, range = mkRange inp len }
+    token_ = 
+      case ch of 
+        '(' -> TParenL
+        ')' -> TParenR
+        '[' -> TBracketL
+        ']' -> TBracketR
+        '{' -> TBraceL
+        '}' -> TBraceR
+        _ -> error "Internal lexer error"
+
+instance MonadFail Alex where 
+  fail msg = Alex (const $ Left msg)
+
 indentToken ::  AlexAction (Maybe (Ranged Token))
 indentToken inp@(_, _, _, str) len =  
   if | T.null rest -> pure Nothing 
@@ -128,10 +173,11 @@ indentToken inp@(_, _, _, str) len =
      | otherwise -> do
          st <- alexGetUserState
          let indentLevel = len - 1
-         case (indentLevel, st.indentLevels) of
-           (0, []) -> pure $ Just $ mkToken TNewline
-           (x, []) -> indentTo x
-           (x, (y:ys)) | x == y -> pure $ Just $ mkToken TNewline
+         case (indentLevel, st.indentLevels, st.parenStack) of
+           (_, _, (_:_)) -> pure Nothing
+           (0, [], []) -> pure $ Just $ mkToken TNewline
+           (x, [], []) -> indentTo x
+           (x, (y:ys), []) | x == y -> pure $ Just $ mkToken TNewline
                        | x > y -> indentTo x
                        | otherwise -> do
                          let (unindentedLevels, restLevels) = span (/= x) ys
