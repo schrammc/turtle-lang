@@ -48,6 +48,7 @@ data Token
   = Identifier Text 
   | TIndent Int 
   | TUnindent
+  | TNewline
   | TAssign
   | TStringLit Text 
   | TNumber Double 
@@ -128,13 +129,13 @@ indentToken inp@(_, _, _, str) len =
          st <- alexGetUserState
          let indentLevel = len - 1
          case (indentLevel, st.indentLevels) of
-           (0, []) -> pure Nothing
+           (0, []) -> pure $ Just $ mkToken TNewline
            (x, []) -> indentTo x
-           (x, (y:ys)) | x == y -> pure Nothing
+           (x, (y:ys)) | x == y -> pure $ Just $ mkToken TNewline
                        | x > y -> indentTo x
                        | otherwise -> do
                          let (unindentedLevels, restLevels) = span (/= x) ys
-                             unindentToken = Ranged { value = TUnindent, range = mkRange inp len}
+                             unindentToken = mkToken TUnindent
                              pendingUnindents = replicate (length unindentedLevels) unindentToken
                              emitTokens = do
                                when (length unindentedLevels > 0) $ 
@@ -152,12 +153,13 @@ indentToken inp@(_, _, _, str) len =
                                        emitTokens
   where
     (_, rest) = T.splitAt len str
-    indentTo x = do      
-      alexModifyUserState $ \st -> st{ indentLevels = (x:st.indentLevels)}
-      pure $ Just $ Ranged
-            { value = TIndent (len - 1)
+    mkToken t = Ranged
+            { value = t
             , range = mkRange inp len
             }
+    indentTo x = do      
+      alexModifyUserState $ \st -> st{ indentLevels = (x:st.indentLevels)}
+      pure $ Just $ mkToken $ TIndent (len - 1)
 
                   
 

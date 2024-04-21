@@ -21,6 +21,7 @@ import Language.Turtle.Frontend.ParsedAST
     eof      { Ranged { value = EOF } }
     indent   { Ranged { value = TIndent _ } }
     unindent { Ranged { value = TUnindent } }
+    newline { Ranged { value = TNewline } }
 
 %%
 Program       : Statements { $1 }
@@ -29,7 +30,7 @@ BlockOrSingleStatement
   : Block { $1 }
   | Statement { [ $1] }
 Statements    : Statement { [ $1 ] }
-              | Statement Statements { $1 : $2 }
+              | Statement newline Statements { $1 : $3 }
 Statement     : Identifier '=' Expression { (Assignment $1 $3) }
               | if Expression ':' BlockOrSingleStatement else ':' BlockOrSingleStatement { If $2 $4 $7 }
 Expression    : num { ELiteral (NumLit $1) }

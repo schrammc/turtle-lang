@@ -17,9 +17,9 @@ spec = do
       it "_a" $ shouldTokenizeAs "_a" [Identifier "_a", EOF]
 
     describe "linebreaks / empty lines" $ do
-      it "a\\nb" $ shouldTokenizeAs "a\nb" [Identifier "a", Identifier "b", EOF]
-      it "a\\n\\nb" $ shouldTokenizeAs "a\n\nb" [Identifier "a", Identifier "b", EOF]
-      it "a\\n  \t\\nb" $ shouldTokenizeAs "a\n\nb" [Identifier "a", Identifier "b", EOF]
+      it "a\\nb" $ shouldTokenizeAs "a\nb" [Identifier "a", TNewline, Identifier "b", EOF]
+      it "a\\n\\nb" $ shouldTokenizeAs "a\n\nb" [Identifier "a", TNewline, Identifier "b", EOF]
+      it "a\\n  \t\\nb" $ shouldTokenizeAs "a\n\nb" [Identifier "a", TNewline, Identifier "b", EOF]
 
     describe "indent" $ do
       it "a\\n  b" $ shouldTokenizeAs "a\n  b" [Identifier "a", TIndent 2, Identifier "b", TUnindent, EOF]
