@@ -14,7 +14,7 @@ module Language.Turtle.Frontend.Lexer
 import qualified Data.Text as T
 import Data.Text (Text)
 import Control.Monad (when)
-import Language.Turtle.Frontend.Range (Pos(Pos), Range(..))
+import Language.Turtle.Frontend.Range (Pos(Pos), Range(..), Ranged(..))
 
 }
 
@@ -95,11 +95,6 @@ alexEOF = do
 
 fromAlexPos :: AlexPosn -> Pos
 fromAlexPos (AlexPn _ line_ column_) = Pos line_ column_
-
-data Ranged a = Ranged
-  { value :: a
-  , range :: Range
-  } deriving (Eq, Show)
 
 mkRange :: AlexInput -> Int -> Range
 mkRange (start_, _, _, str) len = 
