@@ -14,6 +14,7 @@ module Language.Turtle.Frontend.Lexer
 import qualified Data.Text as T
 import Data.Text (Text)
 import Control.Monad (when)
+import Language.Turtle.Frontend.Range (Pos(Pos), Range(..))
 
 }
 
@@ -84,17 +85,16 @@ alexEOF :: Alex (Maybe (Ranged Token))
 alexEOF = do
   (pos, _, _, _) <- alexGetInput
   st <- alexGetUserState
-  let makeToken t = Ranged t (Range pos pos)
+  let makeToken t = Ranged t (Range (fromAlexPos pos) (fromAlexPos pos))
       unindents = makeToken . const TUnindent <$> st.indentLevels 
   alexSetUserState st { indentLevels = []
                       , pendingTokens = st.pendingTokens ++ unindents ++ [makeToken EOF ]
                       }
   pure $ Nothing
 
-data Range = Range
-  { start :: AlexPosn
-  , stop :: AlexPosn
-  } deriving (Eq, Show)
+
+fromAlexPos :: AlexPosn -> Pos
+fromAlexPos (AlexPn _ line_ column_) = Pos line_ column_
 
 data Ranged a = Ranged
   { value :: a
@@ -102,7 +102,10 @@ data Ranged a = Ranged
   } deriving (Eq, Show)
 
 mkRange :: AlexInput -> Int -> Range
-mkRange (start_, _, _, str) len = Range{start = start_, stop = stop_}
+mkRange (start_, _, _, str) len = 
+  Range { start = fromAlexPos start_
+        , stop = fromAlexPos stop_
+        }
   where
     stop_ = T.foldl' alexMove start_ $ T.take len str
 
