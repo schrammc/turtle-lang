@@ -11,8 +11,8 @@ import Language.Turtle.Frontend.ParsedAST
 %lexer { lexwrap } {Ranged { value = EOF }}
 
 %token
-    id       { Ranged { value = Identifier $$ } }
-    num      { Ranged { value = TNumber $$ } }
+    id       { Ranged { value = Identifier _ } }
+    num      { Ranged { value = TNumber num } }
     '='      { Ranged { value = TAssign } }
     ':'      { Ranged { value = TColon } }
     ','      { Ranged { value = TComma } }
@@ -36,10 +36,10 @@ Statements    : Statement { [ $1 ] }
 Statement     : Identifier '=' Expression { (Assignment $1 $3) }
               | if Expression ':' BlockOrSingleStatement else ':' BlockOrSingleStatement { If $2 $4 $7 }
               | Expression { StatementExpression $1 }
-Expression    : num { ELiteral (NumLit $1) }
+Expression    : num { let TNumber num = $1.value in ELiteral (NumLit num) }
               | Identifier { EIdentifier $1 }
               | '(' Expression ')' { $2 }
-Identifier    : id { Ident $1 }
+Identifier    : id { let Identifier val = $1.value in Ident val }
 
 {
 
