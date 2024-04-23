@@ -1,8 +1,13 @@
 {
+{-# LANGUAGE FlexibleContexts #-}
 module Language.Turtle.Frontend.Parser where
 
 import Language.Turtle.Frontend.Lexer (Alex(..), AlexState(..), Token(..), Ranged(..), alexGetUserState, runAlex, lexwrap)
+import Language.Turtle.Frontend.Range ((<*|>), ranges)
 import Language.Turtle.Frontend.ParsedAST 
+import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+
 }
 
 %name program Program
@@ -26,20 +31,24 @@ import Language.Turtle.Frontend.ParsedAST
     newline { Ranged { value = TNewline } }
 
 %%
-Program       : Statements { $1 }
-Block         : indent Statements unindent { $2 }
+Program       : Statements { $1 :: [Ranged (Statement Ranged)] }
+Block         : indent StatementsNonEmpty unindent { $2 }
 BlockOrSingleStatement 
-  : Block { $1 }
-  | Statement { [ $1] }
-Statements    : Statement { [ $1 ] }
-              | Statement newline Statements { $1 : $3 }
-Statement     : Identifier '=' Expression { (Assignment $1 $3) }
-              | if Expression ':' BlockOrSingleStatement else ':' BlockOrSingleStatement { If $2 $4 $7 }
-              | Expression { StatementExpression $1 }
-Expression    : num { let TNumber num = $1.value in ELiteral (NumLit num) }
-              | Identifier { EIdentifier $1 }
+  : Block { $1 :: NonEmpty (Ranged (Statement Ranged))}
+  | Statement { $1 :| [] }
+Statements    
+  : Statement { [ $1 ] }
+  | Statement newline Statements { $1 : $3 }
+StatementsNonEmpty 
+  : Statement { $1 :| []}
+  | Statement newline StatementsNonEmpty { $1 `NE.cons` $3 }
+Statement     : Identifier '=' Expression { Ranged (Assignment $1 $3) ($1.range <> $3.range) }
+              | if Expression ':' BlockOrSingleStatement else ':' BlockOrSingleStatement { Ranged (If $2 $4 $7) ($2.range <> ranges $4 <> ranges $7) }
+              | Expression { Ranged (StatementExpression $1) $1.range }
+Expression    : num { let TNumber num = $1.value in Ranged (ELiteral (NumLit num)) $1.range }
+              | Identifier { EIdentifier `fmap` $1 }
               | '(' Expression ')' { $2 }
-Identifier    : id { let Identifier val = $1.value in Ident val }
+Identifier    : id { let Identifier val = $1.value in Ranged (Ident val) $1.range }
 
 {
 
