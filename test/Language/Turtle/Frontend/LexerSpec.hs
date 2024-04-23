@@ -1,7 +1,8 @@
 module Language.Turtle.Frontend.LexerSpec (spec) where
 
 import Data.Text (Text)
-import Language.Turtle.Frontend.Lexer (Token (..), tokenize, value)
+import Language.Turtle.Frontend.Lexer (Token (..), tokenize)
+import Language.Turtle.Frontend.Range (value)
 import Test.Hspec
 
 shouldTokenizeAs :: Text -> [Token] -> Expectation

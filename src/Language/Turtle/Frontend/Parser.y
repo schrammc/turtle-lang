@@ -2,8 +2,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Language.Turtle.Frontend.Parser where
 
-import Language.Turtle.Frontend.Lexer (Alex(..), AlexState(..), Token(..), Ranged(..), alexGetUserState, runAlex, lexwrap)
-import Language.Turtle.Frontend.Range ((<*|>), ranges)
+import Language.Turtle.Frontend.Lexer (Alex(..), AlexState(..), Token(..), alexGetUserState, runAlex, lexwrap)
+import Language.Turtle.Frontend.Range (Ranged(..), ranges)
 import Language.Turtle.Frontend.ParsedAST 
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE

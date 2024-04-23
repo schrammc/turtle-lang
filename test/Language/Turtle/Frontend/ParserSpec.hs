@@ -6,6 +6,7 @@ import qualified Data.Text.IO as T
 import Language.Turtle.Frontend.Lexer (runAlex)
 import Language.Turtle.Frontend.ParsedAST (Expression (..), Ident (..), Literal (..), Statement (..))
 import Language.Turtle.Frontend.Parser (program)
+import Language.Turtle.Frontend.Range
 import System.Directory
 import System.FilePath
 import Test.Hspec
@@ -31,4 +32,33 @@ spec = describe "Language.Turtle.Frontend.Parser" $ do
     successFiles
 
     it "basic program" $
-        runAlex "a = 1" program `shouldBe` Right [Assignment (Ident "a") (ELiteral (NumLit 1))]
+        runAlex "a = 1" program
+            `shouldBe` Right
+                [ Ranged
+                    { value =
+                        Assignment
+                            ( Ranged
+                                { value = Ident "a"
+                                , range =
+                                    Range
+                                        { start = Pos{line = 1, column = 1}
+                                        , stop = Pos{line = 1, column = 2}
+                                        }
+                                }
+                            )
+                            ( Ranged
+                                { value = ELiteral (NumLit 1.0)
+                                , range =
+                                    Range
+                                        { start = Pos{line = 1, column = 5}
+                                        , stop = Pos{line = 1, column = 6}
+                                        }
+                                }
+                            )
+                    , range =
+                        Range
+                            { start = Pos{line = 1, column = 1}
+                            , stop = Pos{line = 1, column = 6}
+                            }
+                    }
+                ]

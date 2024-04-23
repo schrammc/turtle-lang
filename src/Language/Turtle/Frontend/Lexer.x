@@ -2,7 +2,6 @@
 {-# LANGUAGE MultiWayIf #-}
 module Language.Turtle.Frontend.Lexer 
   ( Token(..)
-  , Ranged(..)
   , Alex(..)
   , AlexState(..)
   , alexGetUserState
