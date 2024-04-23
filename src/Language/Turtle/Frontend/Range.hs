@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module Language.Turtle.Frontend.Range (Pos (..), Range (..), Ranged (..), (<*|>), ranges) where
+module Language.Turtle.Frontend.Range (Pos (..), Range (..), Ranged (..), ranges) where
 
 import Data.Functor.Classes
 import Data.List.NonEmpty (NonEmpty (..))
@@ -20,9 +20,6 @@ instance Eq1 Ranged where
 
 ranges :: NonEmpty (Ranged a) -> Range
 ranges (x :| xs) = foldr (\(Ranged _ r) acc -> r <> acc) (range x) xs
-
-(<*|>) :: Ranged (a -> b) -> Ranged a -> Ranged b
-f <*|> a = Ranged (f.value a.value) (f.range <> a.range)
 
 data Pos = Pos {line :: Int, column :: Int}
     deriving (Eq, Ord, Show)
