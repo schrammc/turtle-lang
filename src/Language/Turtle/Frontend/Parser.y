@@ -60,8 +60,11 @@ Identifier
   : id { let Identifier val = $1.value in Ranged (Ident val) $1.range }
 
 list_like(p)
-  : '[' ']' { Ranged [] ($1.range <> $2.range) }
-  | '[' comma_separated(p) ']' { Ranged $2 ($1.range <> $3.range) }
+  : paren_enclosed('[', ']', p) { $1 }
+
+paren_enclosed(l,r,p)
+  : l r { Ranged [] ($1.range <> $2.range) }
+  | l comma_separated(p) r { Ranged $2 ($1.range <> $3.range) }
 
 comma_separated(p)
   : p ',' comma_separated(p) { $1 : $3 }
