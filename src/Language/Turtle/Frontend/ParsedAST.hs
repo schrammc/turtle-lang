@@ -33,6 +33,7 @@ deriveGeneric (''Ident)
 data Expression (f :: Type -> Type)
     = ELiteral Literal
     | EIdentifier Ident
+    | EList [f (Expression f)]
 
 deriveGeneric (''Expression)
 

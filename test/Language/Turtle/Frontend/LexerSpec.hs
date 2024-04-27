@@ -68,3 +68,9 @@ spec = do
       it "0" $ shouldTokenizeAs "0" [TNumber 0, EOF]
       it "-0" $ shouldTokenizeAs "-0" [TNumber 0, EOF]
       it "0.0" $ shouldTokenizeAs "0.0" [TNumber 0.0, EOF]
+
+    describe "Parens / Brackets" $ do
+      it "[]" $ shouldTokenizeAs "[]" [TBracketL, TBracketR, EOF]
+      it "[1, 2]" $ shouldTokenizeAs "[1, 2]" [TBracketL, TNumber 1, TComma, TNumber 2, TBracketR, EOF]
+      it "()" $ shouldTokenizeAs "()" [TParenL, TParenR, EOF]
+      it "(1, 2)" $ shouldTokenizeAs "(1, 2)" [TParenL, TNumber 1, TComma, TNumber 2, TParenR, EOF]
