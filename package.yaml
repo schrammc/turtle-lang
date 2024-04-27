@@ -24,7 +24,8 @@ dependencies:
   - text
   - directory
   - filepath
-  
+  - generics-sop
+
 build-tools:
   - happy
   - alex
