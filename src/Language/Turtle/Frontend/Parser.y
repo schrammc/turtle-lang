@@ -31,6 +31,7 @@ import qualified Data.List.NonEmpty as NE
     if       { Ranged { value = TIf } }
     else     { Ranged { value = TElse } }
     eof      { Ranged { value = EOF } }
+    fun      { Ranged { value = TFun } }
     indent   { Ranged { value = TIndent _ } }
     unindent { Ranged { value = TUnindent } }
     newline { Ranged { value = TNewline } }
@@ -51,6 +52,7 @@ Statement
   : Identifier '=' Expression { Ranged (Assignment $1 $3) ($1.range <> $3.range) }
   | if Expression ':' BlockOrSingleStatement else ':' BlockOrSingleStatement { Ranged (If $2 $4 $7) ($2.range <> ranges $4 <> ranges $7) }
   | Expression { Ranged (StatementExpression $1) $1.range }
+  | fun Identifier paren_enclosed('(', ')', Identifier) ':' BlockOrSingleStatement { Ranged (FunDecl $2 $3.value $5) ($2.range) }
 Expression    
   : num { let TNumber num = $1.value in Ranged (ELiteral (NumLit num)) $1.range }
   | Identifier { EIdentifier `fmap` $1 }
