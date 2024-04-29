@@ -20,6 +20,7 @@ import qualified Data.List.NonEmpty as NE
 
 %token
     id       { Ranged { value = Identifier _ } }
+    Id       { Ranged { value = TUpperIdentifier _ }}
     num      { Ranged { value = TNumber num } }
     '='      { Ranged { value = TAssign } }
     ':'      { Ranged { value = TColon } }
@@ -28,6 +29,7 @@ import qualified Data.List.NonEmpty as NE
     ')'      { Ranged { value = TParenR } }
     '['      { Ranged { value = TBracketL } }
     ']'      { Ranged { value = TBracketR } }
+    '->'     { Ranged { value = TArrow } }
     if       { Ranged { value = TIf } }
     else     { Ranged { value = TElse } }
     eof      { Ranged { value = EOF } }
@@ -52,14 +54,28 @@ Statement
   : Identifier '=' Expression { Ranged (Assignment $1 $3) ($1.range <> $3.range) }
   | if Expression ':' BlockOrSingleStatement else ':' BlockOrSingleStatement { Ranged (If $2 $4 $7) ($2.range <> ranges $4 <> ranges $7) }
   | Expression { Ranged (StatementExpression $1) $1.range }
-  | fun Identifier paren_enclosed('(', ')', Identifier) ':' BlockOrSingleStatement { Ranged (FunDecl $2 $3.value $5) ($2.range) }
+  | fun Identifier paren_enclosed('(', ')', IdentifierWithType) ':' BlockOrSingleStatement { Ranged (FunDecl $2 $3.value $5) ($2.range) }
 Expression    
   : num { let TNumber num = $1.value in Ranged (ELiteral (NumLit num)) $1.range }
   | Identifier { EIdentifier `fmap` $1 }
   | '(' Expression ')' { $2 }
   | list_like(Expression) { EList `fmap` $1 }
+
+IdentifierWithType
+  : Identifier ':' Type { Ranged (IdentWithType $1.value $3.value) ($1.range <> $3.range) }
+
+Type 
+  : TypeIdent { ASTType `fmap` $1 }
+  | FunctionParams '->' Type  { Ranged (FuncType $1.value $3.value) ($1.range <> $3.range)}
+
+FunctionParams
+  : paren_enclosed('(', ')', Type) { (FunctionParams . (fmap (.value))) `fmap` $1 }
+
 Identifier    
   : id { let Identifier val = $1.value in Ranged (Ident val) $1.range }
+TypeIdent 
+  : Id { let TUpperIdentifier val = $1.value in Ranged (TypeIdent val) $1.range }
+
 
 list_like(p)
   : paren_enclosed('[', ']', p) { $1 }

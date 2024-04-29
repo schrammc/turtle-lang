@@ -12,6 +12,10 @@ module Language.Turtle.Frontend.ParsedAST (
     Statement (..),
     Ident (..),
     Expression (..),
+    TypeIdent (..),
+    ASTType (..),
+    FunctionParams (..),
+    IdentWithType (..),
 ) where
 
 import Data.Functor.Classes (Eq1, Show1)
@@ -30,6 +34,24 @@ newtype Ident = Ident Text
 
 deriveGeneric (''Ident)
 
+newtype TypeIdent = TypeIdent Text
+    deriving (Show, Eq)
+
+deriveGeneric (''TypeIdent)
+
+newtype FunctionParams = FunctionParams [ASTType]
+    deriving (Show, Eq)
+data ASTType
+    = ASTType TypeIdent
+    | FuncType FunctionParams ASTType
+    deriving (Show, Eq)
+deriveGeneric (''FunctionParams)
+deriveGeneric (''ASTType)
+
+data IdentWithType = IdentWithType Ident ASTType
+    deriving (Show, Eq)
+deriveGeneric (''IdentWithType)
+
 data Expression (f :: Type -> Type)
     = ELiteral Literal
     | EIdentifier Ident
@@ -44,7 +66,7 @@ data Statement (f :: Type -> Type)
     = Assignment (f Ident) (f (Expression f))
     | StatementExpression (f (Expression f))
     | If (f (Expression f)) (NonEmpty (f (Statement f))) (NonEmpty (f (Statement f)))
-    | FunDecl (f Ident) [f Ident] (NonEmpty (f (Statement f)))
+    | FunDecl (f Ident) [f IdentWithType] (NonEmpty (f (Statement f)))
 
 deriveGeneric (''Statement)
 

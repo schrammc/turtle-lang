@@ -1,2 +1,2 @@
-fun apply(f, a):
+fun apply(f: B, a: A):
   f

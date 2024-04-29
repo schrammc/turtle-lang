@@ -21,10 +21,14 @@ import Language.Turtle.Frontend.Range (Pos(Pos), Range(..), Ranged(..))
 
 $digit = [0-9]
 $alpha = [a-zA-Z]
+$alphaLower = [a-z]
+$alphaUpper = [A-Z]
 $underscore = \_
 $dot = \.
 
-@identifier = ($alpha | $underscore) ($alpha | $digit | $underscore)*
+@arrow = "->"
+@identifier = ($alphaLower | $underscore) ($alpha | $digit | $underscore)*
+@upperIdentifier = $alphaUpper ($alpha | $digit | $underscore)*
 @digits = $digit+
 @number = (\-?) @digits ($dot $digit+)?
 
@@ -33,7 +37,9 @@ $dot = \.
 tokens :-
 
 <0> @identifier           { nameCaptureToken Identifier }
+<0> @upperIdentifier      { nameCaptureToken TUpperIdentifier }
 <0> @number               { numberToken }
+<0> @arrow                { aToken TArrow }
 <0> \n [\ ]*              { indentToken }
 <0> [=]                   { aToken TAssign }
 <0> [\ \t]                ;
@@ -48,7 +54,9 @@ tokens :-
 {
 data Token 
   = Identifier Text 
+  | TUpperIdentifier Text
   | TIndent Int 
+  | TArrow
   | TUnindent
   | TNewline
   | TAssign

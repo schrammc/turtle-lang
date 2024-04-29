@@ -1,2 +1,2 @@
-fun identity(x):
+fun identity(x: Int):
   x
