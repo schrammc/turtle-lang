@@ -66,7 +66,7 @@ data Statement (f :: Type -> Type)
     = Assignment (f Ident) (f (Expression f))
     | StatementExpression (f (Expression f))
     | If (f (Expression f)) (NonEmpty (f (Statement f))) (NonEmpty (f (Statement f)))
-    | FunDecl (f Ident) [f IdentWithType] (NonEmpty (f (Statement f)))
+    | FunDecl (f Ident) [f IdentWithType] (f ASTType) (NonEmpty (f (Statement f)))
 
 deriveGeneric (''Statement)
 

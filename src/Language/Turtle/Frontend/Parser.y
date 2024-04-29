@@ -54,7 +54,7 @@ Statement
   : Identifier '=' Expression { Ranged (Assignment $1 $3) ($1.range <> $3.range) }
   | if Expression ':' BlockOrSingleStatement else ':' BlockOrSingleStatement { Ranged (If $2 $4 $7) ($2.range <> ranges $4 <> ranges $7) }
   | Expression { Ranged (StatementExpression $1) $1.range }
-  | fun Identifier paren_enclosed('(', ')', IdentifierWithType) ':' BlockOrSingleStatement { Ranged (FunDecl $2 $3.value $5) ($2.range) }
+  | fun Identifier paren_enclosed('(', ')', IdentifierWithType) '->' Type ':' BlockOrSingleStatement { Ranged (FunDecl $2 $3.value $5 $7) ($2.range) }
 Expression    
   : num { let TNumber num = $1.value in Ranged (ELiteral (NumLit num)) $1.range }
   | Identifier { EIdentifier `fmap` $1 }
