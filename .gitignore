@@ -1,3 +1,4 @@
+src/Language/Turtle/Frontend/Parser.hs
 .stack-work/
 turtle-lang.cabal
 *~
