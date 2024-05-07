@@ -16,6 +16,7 @@ module Language.Turtle.Frontend.ParsedAST (
     ASTType (..),
     FunctionParams (..),
     IdentWithType (..),
+    Pattern (..),
 ) where
 
 import Data.Functor.Classes (Eq1, Show1)
@@ -62,11 +63,21 @@ deriveGeneric (''Expression)
 deriving instance (Show1 f) => Show (Expression f)
 deriving instance (Eq1 f) => Eq (Expression f)
 
+data Pattern (f :: Type -> Type)
+    = VarPattern (f Ident)
+    | LitPattern Literal
+
+deriveGeneric (''Pattern)
+
+deriving instance (Show1 f) => Show (Pattern f)
+deriving instance (Eq1 f) => Eq (Pattern f)
+
 data Statement (f :: Type -> Type)
     = Assignment (f Ident) (f (Expression f))
     | StatementExpression (f (Expression f))
     | If (f (Expression f)) (NonEmpty (f (Statement f))) (NonEmpty (f (Statement f)))
     | FunDecl (f Ident) [f IdentWithType] (f ASTType) (NonEmpty (f (Statement f)))
+    | MatchCase (f (Expression f)) [f (Pattern f, NonEmpty (f (Statement f)))]
 
 deriveGeneric (''Statement)
 

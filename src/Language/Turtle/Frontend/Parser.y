@@ -33,11 +33,13 @@ import Data.List (intercalate)
     '->'     { Ranged { value = TArrow } }
     if       { Ranged { value = TIf } }
     else     { Ranged { value = TElse } }
+    match    { Ranged { value = TMatch } }
+    case     { Ranged { value = TCase } }
     eof      { Ranged { value = EOF } }
     fun      { Ranged { value = TFun } }
     indent   { Ranged { value = TIndent _ } }
     unindent { Ranged { value = TUnindent } }
-    newline { Ranged { value = TNewline } }
+    newline  { Ranged { value = TNewline } }
 
 %%
 Program       : Statements { $1 :: [Ranged (Statement Ranged)] }
@@ -56,6 +58,22 @@ Statement
   | if Expression ':' BlockOrSingleStatement else ':' BlockOrSingleStatement { Ranged (If $2 $4 $7) ($2.range <> ranges $4 <> ranges $7) }
   | Expression { Ranged (StatementExpression $1) $1.range }
   | fun Identifier paren_enclosed('(', ')', IdentifierWithType) '->' Type ':' BlockOrSingleStatement { Ranged (FunDecl $2 $3.value $5 $7) ($2.range) }
+  | CaseSt { $1 }
+
+CaseSt
+  : match Expression ':' indent Cases unindent { Ranged (MatchCase $2 $5) ($1.range <> $6.range) }
+
+Cases
+  : Case { [ $1 ] }
+  | Case newline Cases {$1 : $3 }
+
+Case
+  : case Pattern ':' BlockOrSingleStatement {Ranged ($2.value, $4) ($1.range <> ranges $4)}
+
+Pattern
+  : num {let TNumber num = $1.value in Ranged (LitPattern (NumLit num)) $1.range}
+  | Identifier { Ranged (VarPattern $1) $1.range }
+
 Expression    
   : num { let TNumber num = $1.value in Ranged (ELiteral (NumLit num)) $1.range }
   | Identifier { EIdentifier `fmap` $1 }

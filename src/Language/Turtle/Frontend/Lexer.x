@@ -73,6 +73,8 @@ data Token
   | TBraceR
   | TIf
   | TElse
+  | TMatch
+  | TCase
   | TFun
   | EOF
   deriving (Eq, Show)
@@ -129,6 +131,8 @@ nameCaptureToken buildToken inp@(_, _, _, str) len =
         "if"  -> TIf
         "else" -> TElse
         "fun" -> TFun
+        "match" -> TMatch
+        "case" -> TCase
         _ -> buildToken idStr
 
 numberToken ::  AlexAction (Maybe (Ranged Token))
