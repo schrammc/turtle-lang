@@ -1,3 +1,6 @@
 match x:
-  case 5: x
-  case a: a
+  case 5: 
+    print
+  case a:
+    a
+    b
