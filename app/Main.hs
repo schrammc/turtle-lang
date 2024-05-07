@@ -2,9 +2,12 @@
 
 module Main (main) where
 
+import Data.Text as T
 import qualified Data.Text.IO as T
+import Language.Turtle.Error (TurtleError (..), parserError, renderErrorWithFileContent)
 import Language.Turtle.Frontend.Lexer
 import Language.Turtle.Frontend.Parser
+import Language.Turtle.Location (Location (..))
 import Options.Applicative
 import System.Exit (exitFailure)
 
@@ -33,9 +36,16 @@ main = do
 runParse :: ParseOptions -> IO ()
 runParse opts = do
     fileContent <- T.readFile $ opts.filePath
-    let parseResult = runAlex fileContent program
+    let parseResult = runAlexWithError fileContent program
     case parseResult of
         Right res -> print res
-        Left err -> do
-            putStrLn $ "ERROR: " ++ err
+        Left (Left msg) -> putStrLn msg >> exitFailure
+        Left (Right (range, err)) -> do
+            let turtleError =
+                    TurtleError
+                        { errorId = parserError
+                        , message = T.pack $ err
+                        , location = Location opts.filePath range
+                        }
+            T.putStrLn $ renderErrorWithFileContent turtleError fileContent
             exitFailure

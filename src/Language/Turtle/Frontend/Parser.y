@@ -2,12 +2,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Language.Turtle.Frontend.Parser where
 
-import Language.Turtle.Frontend.Lexer (Alex(..), AlexState(..), Token(..), alexGetUserState, runAlex, lexwrap)
+import Language.Turtle.Frontend.Lexer (Alex(..), AlexState(..), Token(..), alexGetUserState, lexwrap)
 import Language.Turtle.Frontend.Range (Ranged(..), ranges)
 import Language.Turtle.Frontend.ParsedAST 
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Semigroup (sconcat)
 import qualified Data.List.NonEmpty as NE
+import Data.List (intercalate)
 
 }
 
@@ -91,7 +92,6 @@ comma_separated(p)
 {
 
 parserErrorHandler :: (Ranged Token, [String]) -> Alex a
-parserErrorHandler possibleTokens = Alex $ \alexState -> do 
-  Left $ "Unspecified parser error at (char, line, col) "  ++ show alexState.alex_pos ++ "\npossible: " ++ show possibleTokens
+parserErrorHandler (_, possibleTokens) = fail $ "Parser error. Possible tokens:\n    - " ++ intercalate "\n    - " possibleTokens 
 
 }

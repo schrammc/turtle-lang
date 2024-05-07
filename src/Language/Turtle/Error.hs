@@ -1,6 +1,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Language.Turtle.Error (TurtleError (..), renderError, parserError) where
+module Language.Turtle.Error (TurtleError (..), renderError, parserError, renderErrorWithFileContent) where
 
 import Control.Monad.IO.Class (MonadIO (..))
 import Data.Text (Text)
@@ -29,6 +29,10 @@ data TurtleError
 renderError :: (MonadIO m) => TurtleError -> m Text
 renderError err = do
     fileContent <- liftIO $ T.readFile err.location.locationFile
+    pure $ renderErrorWithFileContent err fileContent
+
+renderErrorWithFileContent :: TurtleError -> Text -> Text
+renderErrorWithFileContent err fileContent =
     let Pos{line, column} = err.location.locationRange.start
         errorLine = case drop (line - 1) (T.lines fileContent) of
             [] -> error "Internal error: renderError - line out of bounds"
@@ -36,9 +40,7 @@ renderError err = do
         spaces = take (column - 1) (repeat ' ')
         caret = T.pack $ spaces ++ "^"
         indent = ("    " <>)
-
-    pure $
-        T.unlines
-            [ formatErrorId err.errorId <> " " <> T.pack (err.location.locationFile <> ":")
-            , T.unlines $ indent <$> [errorLine, caret, message err]
+     in T.unlines
+            [ "Error: " <> formatErrorId err.errorId <> " " <> T.pack (err.location.locationFile <> ":")
+            , T.unlines $ indent <$> [errorLine, caret] ++ T.lines (message err)
             ]

@@ -5,7 +5,7 @@ module Language.Turtle.Frontend.Lexer
   , Alex(..)
   , AlexState(..)
   , alexGetUserState
-  , runAlex
+  , runAlexWithError
   , lexwrap
   , tokenize 
   ) where
@@ -13,7 +13,8 @@ module Language.Turtle.Frontend.Lexer
 import qualified Data.Text as T
 import Data.Text (Text)
 import Control.Monad (when)
-import Language.Turtle.Frontend.Range (Pos(Pos), Range(..), Ranged(..))
+import Language.Turtle.Frontend.Range (Pos(Pos), Range(..), Ranged(..), rangeAtPos)
+import Text.Read (readMaybe)
 
 }
 
@@ -171,7 +172,9 @@ paren inp@(_,_,_,str) len
         _ -> error "Internal lexer error"
 
 instance MonadFail Alex where 
-  fail msg = Alex (const $ Left msg)
+  fail msg = Alex $ \s -> 
+    let AlexPn _ l c = s.alex_pos
+    in Left $ show (rangeAtPos $ Pos l c, msg)
 
 indentToken ::  AlexAction (Maybe (Ranged Token))
 indentToken inp@(_, _, _, str) len =  
@@ -222,6 +225,13 @@ stringLitToken  inp@(_, _, _, str) len =
     { value = TStringLit $ T.take len str
     , range = mkRange inp len
     }
+
+runAlexWithError :: Text -> Alex a -> Either (Either String (Range, String)) a
+runAlexWithError txt action = 
+  case runAlex txt action of 
+    Left err | Just e <- readMaybe err -> Left (Right e)
+             | otherwise -> Left (Left err)
+    Right x -> Right x
 
 tokenize :: Text -> Either String [Ranged Token]
 tokenize input = runAlex input go

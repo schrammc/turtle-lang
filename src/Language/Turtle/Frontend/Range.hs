@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module Language.Turtle.Frontend.Range (Pos (..), Range (..), Ranged (..), ranges) where
+module Language.Turtle.Frontend.Range (Pos (..), Range (..), Ranged (..), ranges, rangeAtPos) where
 
 import Data.Functor.Classes
 import Data.List.NonEmpty (NonEmpty (..))
@@ -21,14 +21,17 @@ instance Eq1 Ranged where
 ranges :: NonEmpty (Ranged a) -> Range
 ranges (x :| xs) = foldr (\(Ranged _ r) acc -> r <> acc) (range x) xs
 
+rangeAtPos :: Pos -> Range
+rangeAtPos p = Range p p
+
 data Pos = Pos {line :: Int, column :: Int}
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord, Show, Read)
 
 data Range = Range
     { start :: Pos
     , stop :: Pos
     }
-    deriving (Eq, Show)
+    deriving (Eq, Show, Read)
 
 instance Semigroup Range where
     Range start1 stop1 <> Range start2 stop2 = Range (min start1 start2) (max stop1 stop2)

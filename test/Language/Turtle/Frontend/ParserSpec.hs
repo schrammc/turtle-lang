@@ -3,7 +3,7 @@ module Language.Turtle.Frontend.ParserSpec (spec) where
 import Control.Monad (forM_)
 import Data.Either (isLeft, isRight)
 import qualified Data.Text.IO as T
-import Language.Turtle.Frontend.Lexer (runAlex)
+import Language.Turtle.Frontend.Lexer (runAlexWithError)
 import Language.Turtle.Frontend.ParsedAST (Expression (..), Ident (..), Literal (..), Statement (..))
 import Language.Turtle.Frontend.Parser (program)
 import Language.Turtle.Frontend.Range
@@ -25,12 +25,12 @@ filesInDirRecursive topDir toSpec = go topDir
 successFiles :: Spec
 successFiles = filesInDirRecursive "test-files/parser/success" $ \path -> do
     fileContent <- T.readFile path
-    runAlex fileContent program `shouldSatisfy` isRight
+    runAlexWithError fileContent program `shouldSatisfy` isRight
 
 failureFiles :: Spec
 failureFiles = filesInDirRecursive "test-files/parser/failure" $ \path -> do
     fileContent <- T.readFile path
-    runAlex fileContent program `shouldSatisfy` isLeft
+    runAlexWithError fileContent program `shouldSatisfy` isLeft
 
 spec :: Spec
 spec = describe "Language.Turtle.Frontend.Parser" $ do
@@ -38,7 +38,7 @@ spec = describe "Language.Turtle.Frontend.Parser" $ do
     failureFiles
 
     it "basic program" $
-        runAlex "a = 1" program
+        runAlexWithError "a = 1" program
             `shouldBe` Right
                 [ Ranged
                     { value =
