@@ -57,6 +57,7 @@ data Expression (f :: Type -> Type)
     = ELiteral Literal
     | EIdentifier Ident
     | EList [f (Expression f)]
+    | ECall (f (Expression f)) [(f (Expression f))]
 
 deriveGeneric (''Expression)
 

@@ -78,6 +78,7 @@ Expression
   : num { let TNumber num = $1.value in Ranged (ELiteral (NumLit num)) $1.range }
   | Identifier { EIdentifier `fmap` $1 }
   | '(' Expression ')' { $2 }
+  | Expression paren_enclosed('(', ')', Expression) { Ranged (ECall $1 $2.value ) ($1.range <> $2.range)}
   | list_like(Expression) { EList `fmap` $1 }
 
 IdentifierWithType
