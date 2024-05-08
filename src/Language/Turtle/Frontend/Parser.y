@@ -46,7 +46,7 @@ Program       : Statements { $1 :: [Ranged (Statement Ranged)] }
 Block         : indent StatementsNonEmpty unindent { $2 }
 BlockOrSingleStatement 
   : Block { $1 :: NonEmpty (Ranged (Statement Ranged))}
-  | Statement { $1 :| [] }
+  | Statement newline { $1 :| [] }
 Statements    
   : Statement { [ $1 ] }
   | Statement newline Statements { $1 : $3 }
@@ -65,7 +65,7 @@ CaseSt
 
 Cases
   : Case { [ $1 ] }
-  | Case newline Cases {$1 : $3 }
+  | Case Cases {$1 : $2 }
 
 Case
   : case Pattern ':' BlockOrSingleStatement {Ranged ($2.value, $4) ($1.range <> ranges $4)}

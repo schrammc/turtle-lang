@@ -5,10 +5,8 @@ module Main (main) where
 
 import Data.Text as T
 import qualified Data.Text.IO as T
-import Data.Text.Lazy (toChunks)
 import Language.Turtle.Error (TurtleError (..), parserError, renderErrorWithFileContent)
-import Language.Turtle.Frontend.Lexer
-import Language.Turtle.Frontend.Lexer (tokenize)
+import Language.Turtle.Frontend.Lexer (runAlexWithError, tokenize)
 import Language.Turtle.Frontend.Parser
 import Language.Turtle.Location (Location (..))
 import Options.Applicative
