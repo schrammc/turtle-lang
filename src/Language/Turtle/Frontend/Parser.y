@@ -22,6 +22,7 @@ import Data.List (intercalate)
 %token
     id       { Ranged { value = Identifier _ } }
     Id       { Ranged { value = TUpperIdentifier _ }}
+    stringlit{ Ranged { value = TStringLit _ }}
     num      { Ranged { value = TNumber num } }
     '='      { Ranged { value = TAssign } }
     ':'      { Ranged { value = TColon } }
@@ -75,12 +76,16 @@ Pattern
   | Identifier { Ranged (VarPattern $1) $1.range }
 
 Expression    
-  : num { let TNumber num = $1.value in Ranged (ELiteral (NumLit num)) $1.range }
+  : Literal { ELiteral `fmap` $1 }
   | Identifier { EIdentifier `fmap` $1 }
   | '(' Expression ')' { $2 }
   | Expression paren_enclosed('(', ')', Expression) { Ranged (ECall $1 $2.value ) ($1.range <> $2.range)}
   | list_like(Expression) { EList `fmap` $1 }
 
+Literal
+  : num { let TNumber num = $1.value in Ranged (NumLit num) $1.range }
+  | stringlit { let TStringLit str = $1.value in Ranged (StringLit str) $1.range }
+    
 IdentifierWithType
   : Identifier ':' Type { Ranged (IdentWithType $1.value $3.value) ($1.range <> $3.range) }
 

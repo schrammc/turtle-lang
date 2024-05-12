@@ -25,7 +25,9 @@ import Data.List.NonEmpty
 import Data.Text (Text)
 import Generics.SOP.TH
 
-newtype Literal = NumLit Double
+data Literal
+    = NumLit Double
+    | StringLit Text
     deriving (Show, Eq)
 
 deriveGeneric (''Literal)
