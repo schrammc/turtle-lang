@@ -4,7 +4,7 @@ import Control.Monad (forM_)
 import Data.Either (isLeft, isRight)
 import qualified Data.Text.IO as T
 import Language.Turtle.Frontend.Lexer (runAlexWithError)
-import Language.Turtle.Frontend.ParsedAST (Expression (..), Ident (..), Literal (..), Statement (..))
+import Language.Turtle.Frontend.ParsedAST (Annotated (..), Expression (..), Ident (..), Literal (..), Statement (..))
 import Language.Turtle.Frontend.Parser (program)
 import Language.Turtle.Frontend.Range
 import System.Directory
@@ -40,28 +40,28 @@ spec = describe "Language.Turtle.Frontend.Parser" $ do
     it "basic program" $
         runAlexWithError "a = 1" program
             `shouldBe` Right
-                [ Ranged
-                    { value =
+                [ Annotated
+                    { annotatedValue =
                         Assignment
-                            ( Ranged
-                                { value = Ident "a"
-                                , range =
+                            ( Annotated
+                                { annotatedValue = Ident "a"
+                                , annotation =
                                     Range
                                         { start = Pos{line = 1, column = 1}
                                         , stop = Pos{line = 1, column = 2}
                                         }
                                 }
                             )
-                            ( Ranged
-                                { value = ELiteral (NumLit 1.0)
-                                , range =
+                            ( Annotated
+                                { annotatedValue = ELiteral (NumLit 1.0)
+                                , annotation =
                                     Range
                                         { start = Pos{line = 1, column = 5}
                                         , stop = Pos{line = 1, column = 6}
                                         }
                                 }
                             )
-                    , range =
+                    , annotation =
                         Range
                             { start = Pos{line = 1, column = 1}
                             , stop = Pos{line = 1, column = 6}
