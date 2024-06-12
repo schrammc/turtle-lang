@@ -122,9 +122,6 @@ astMapM ::
     m d
 astMapM fbefore fafter f tree = do
     fbefore tree
-    let
-        f' :: forall x. (Data x) => x -> m x
-        f' x = (gmapM f x) >>= f
-    changedTree <- gmapM f' tree
+    changedTree <- gmapM (astMapM fbefore fafter f) tree >>= f
     fafter changedTree
     pure changedTree
