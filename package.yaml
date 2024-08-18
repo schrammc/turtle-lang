@@ -24,7 +24,6 @@ dependencies:
   - text
   - directory
   - filepath
-  - generics-sop
   - hkd
 
 build-tools:
