@@ -48,6 +48,7 @@ tokens :-
 <0> \,                    { aToken TComma }
 <0> \"                    { begin string }
 <0> [\(\[\[\)\]\}]        { paren}
+<0> \|                     { aToken TPipe }
 
 <string> [^\"]*           { stringLitToken }
 <string> \"               { begin 0 }
@@ -76,6 +77,7 @@ data Token
   | TMatch
   | TCase
   | TFun
+  | TPipe
   | EOF
   deriving (Eq, Show)
 

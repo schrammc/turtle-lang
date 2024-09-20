@@ -32,6 +32,7 @@ import Data.List (intercalate)
     '['      { Ranged { value = TBracketL } }
     ']'      { Ranged { value = TBracketR } }
     '->'     { Ranged { value = TArrow } }
+    '|'      { Ranged { value = TPipe } }
     if       { Ranged { value = TIf } }
     else     { Ranged { value = TElse } }
     match    { Ranged { value = TMatch } }
@@ -41,6 +42,9 @@ import Data.List (intercalate)
     indent   { Ranged { value = TIndent _ } }
     unindent { Ranged { value = TUnindent } }
     newline  { Ranged { value = TNewline } }
+
+%left '|'
+%left '->'
 
 %%
 Program       : Statements { $1 :: ParsedAST Range }
@@ -97,6 +101,7 @@ IdentifierWithType
 Type 
   : TypeIdent { ASTType `fmap` $1 }
   | FunctionParams '->' Type  { Annotated ($1.annotation <> $3.annotation) (FuncType $1.annotatedValue $3.annotatedValue) }
+  | Type '|' Type { Annotated ($1.annotation <> $3.annotation) (Union $1.annotatedValue $3.annotatedValue)}
 
 FunctionParams
   : paren_enclosed('(', ')', Type) { (FunctionParams . (fmap (.annotatedValue))) `fmap` $1 }
