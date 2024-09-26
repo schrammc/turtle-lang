@@ -66,6 +66,7 @@ data ASTType
     = ASTType TypeIdent
     | FuncType FunctionParams ASTType
     | Union ASTType ASTType
+    | TypeApplication ASTType ASTType
     deriving (Show, Eq, Typeable, Data)
 deriveGeneric (''FunctionParams)
 deriveGeneric (''ASTType)

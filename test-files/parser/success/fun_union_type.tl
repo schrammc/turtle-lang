@@ -1,2 +1,2 @@
-fun apply(f: B, a: A | C) -> B:
+fun apply(f: B, a: A X | C) -> B:
   f

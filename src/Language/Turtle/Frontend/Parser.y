@@ -98,10 +98,15 @@ Literal
 IdentifierWithType
   : Identifier ':' Type { Annotated ($1.annotation <> $3.annotation) (IdentWithType $1.annotatedValue $3.annotatedValue)  }
 
+SimpleType : TypeIdent { ASTType `fmap` $1 }
+
 Type 
-  : TypeIdent { ASTType `fmap` $1 }
+  : SimpleType { $1 }
   | FunctionParams '->' Type  { Annotated ($1.annotation <> $3.annotation) (FuncType $1.annotatedValue $3.annotatedValue) }
   | Type '|' Type { Annotated ($1.annotation <> $3.annotation) (Union $1.annotatedValue $3.annotatedValue)}
+  | SimpleType SimpleType { Annotated ($1.annotation <> $2.annotation) (TypeApplication $1.annotatedValue $2.annotatedValue)}
+  | SimpleType '(' Type ')' { Annotated ($1.annotation <> $4.range) (TypeApplication $1.annotatedValue $3.annotatedValue)}
+
 
 FunctionParams
   : paren_enclosed('(', ')', Type) { (FunctionParams . (fmap (.annotatedValue))) `fmap` $1 }
